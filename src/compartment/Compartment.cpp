@@ -458,6 +458,89 @@ bool Compartment::moveRandom(const repast::AgentId &id, const double & maxSpeed)
   return mpLayer->moveTo(id, Location);
 }
 
+bool Compartment::moveDirected(const repast::AgentId &id, const double & maxSpeed, int dir)
+{
+  static double eighthCircle = 0.25 * M_PI; // in radians
+  double angle = eighthCircle * mUniform.next();
+  switch (dir){
+    case 0: angle += .5625 * 2 * M_PI;
+          break;
+    case 1: angle += .4375 * 2 * M_PI;
+          break;
+    case 2: angle += .3125 * 2 * M_PI;
+          break;
+    case 3: angle += .6875 * 2 * M_PI;
+          break;
+    case 4: angle += .5625 * 2 * M_PI;
+          break;
+    case 5: angle += .1875 * 2 * M_PI;
+          break;
+    case 6: angle += .8125 * 2 * M_PI;
+          break;
+    case 7: angle += .9375 * 2 * M_PI;
+          break;
+    case 8: angle += .0625 * 2 * M_PI;
+          break;
+  }
+
+  double radius = maxSpeed * mUniform.next();
+
+  std::vector< double > Location(2);
+
+  mpLayer->getLocation(id, Location);
+  Location[0] += radius * cos(angle);
+  Location[1] += radius * sin(angle);
+
+  mpSpaceBorders->transform(Location);
+
+  std::vector< Borders::BoundState > BoundState(2);
+
+  if (!mpSpaceBorders->boundsCheck(Location, &BoundState))
+  {
+    // We are at the compartment boundaries;
+    // Since this is a random move we reflect at the compartment border
+
+    size_t i = Borders::X;
+    double tmp;
+
+    std::vector<Borders::BoundState>::const_iterator itState = BoundState.begin();
+    std::vector<Borders::BoundState>::const_iterator endState = BoundState.end();
+    std::vector<double>::iterator itLocation = Location.begin();
+
+    for (; itState != endState; ++itState, ++itLocation, ++i)
+    {
+      switch (*itState)
+      {
+        case Borders::OUT_LOW:
+          tmp = fmod(mSpaceDimensions.origin(i) - *itLocation, 2.0 * mSpaceDimensions.extents(i));
+
+              if (tmp < mSpaceDimensions.extents(i))
+                *itLocation = mSpaceDimensions.origin(i) + tmp;
+              else
+                *itLocation = mSpaceDimensions.origin(i) + 2.0 * mSpaceDimensions.extents(i) - tmp;
+
+              break;
+
+        case Borders::OUT_HIGH:
+          tmp = fmod(*itLocation - mSpaceDimensions.origin(i) - mSpaceDimensions.extents(i), 2.0 * mSpaceDimensions.extents(i));
+
+              if (tmp < mSpaceDimensions.extents(i))
+                *itLocation = mSpaceDimensions.origin(i) + mSpaceDimensions.extents(i) - tmp;
+              else
+                *itLocation = mSpaceDimensions.origin(i) + tmp - mSpaceDimensions.extents(i);
+
+              break;
+
+        case Borders::INBOUND:
+        case Borders::OUT_BOTH:
+          break;
+      }
+    }
+  }
+
+  return mpLayer->moveTo(id, Location);
+}
+
 bool Compartment::addAgent(Agent * agent, const std::vector< double > & pt)
 {
   return mpLayer->addAgent(agent, pt);

@@ -67,6 +67,7 @@ public:
   bool moveTo(const repast::AgentId &id, repast::Point< double > &pt);
   bool moveTo(const repast::AgentId &id, std::vector< double > &newLocation);
   bool moveRandom(const repast::AgentId &id, const double & maxSpeed);
+  bool moveDirected(const repast::AgentId &id, const double & maxSpeed, int dir);
   bool addAgent(Agent * agent, const std::vector< double > & pt);
   bool addAgentToRandomLocation(Agent * agent);
   void removeAgent (Agent * pAgent);

@@ -175,14 +175,41 @@ void NeutrophilGroup::move()
 {
 	// TODO CRITICAL Determine the maximum speed
 	double MaxSpeed = 4.0;
-
+	bool directed [9];
+	int max = 0;
+	int dir = 0;
 	// Find all local agents and move them
 	Compartment::LocalIterator itLocal = mpCompartment->localBegin();
 	Compartment::LocalIterator endLocal = mpCompartment->localEnd();
 
 	for (; itLocal != endLocal; ++itLocal)
 	{
-		mpCompartment->moveRandom((*itLocal)->getId(), MaxSpeed);
+        std::vector< double > Location(2);
+        mpCompartment->getLocation((*itLocal)->getId(),Location);
+        const repast::Point<int> & pt = mpCompartment->spaceToGrid(Location);
+
+		int count = 0;
+		for (int x = -1; x < 2; ++x) {
+			for (int y = -1; y < 2; ++y) {
+				if(mpCompartment->cytokineValue("eIL17", pt, x, y) >= max){
+					directed[count] = true;
+					max = mpCompartment->cytokineValue("eIL17", pt, x, y);
+				}
+				count++;
+			}
+			count ++;
+		}
+		for (int i = 0; i < 9; ++i) {
+			if(directed[i]){
+				dir = i;
+			}
+		}
+		if(dir == 4){
+			mpCompartment->moveRandom((*itLocal)->getId(), MaxSpeed);
+		} else{
+			mpCompartment->moveRandom((*itLocal)->getId(), MaxSpeed * 0.5);
+			mpCompartment->moveDirected((*itLocal)->getId(), MaxSpeed * 0.5,dir);
+		}
 	}
 }
 
